@@ -1,0 +1,333 @@
+From 094d07d2769a2445a228705980a3157578796b69 Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Sat, 21 Mar 2020 22:43:50 +0100
+Subject: [PATCH] wip: Working version
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ CMakeLists.txt                        |  19 +++-
+ buildMake.sh                          |  18 ++--
+ cmake/Component.hxx.in                |  23 +++++
+ cmake/ShapeComponentDeclaration.cmake | 168 ++++++++++++++++++++++++++++++++++
+ cmake/StartUp.in                      |   1 +
+ include/CMakeLists.txt                |   1 +
+ 6 files changed, 220 insertions(+), 10 deletions(-)
+ create mode 100644 cmake/Component.hxx.in
+ create mode 100644 cmake/ShapeComponentDeclaration.cmake
+ create mode 100644 cmake/StartUp.in
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1ac092d..22a93d7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,6 +2,9 @@ project(shapeware)
+ 
+ cmake_minimum_required(VERSION 3.0)
+ 
++set(PROJECT_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
++set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
++
+ #set(CMAKE_VERBOSE_MAKEFILE ON)
+ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+ 
+@@ -74,10 +77,18 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   endif()
+ endif()
+ 
+-FIND_PACKAGE(shape REQUIRED)
++#FIND_PACKAGE(shape REQUIRED)
++
++#find_library(SHAPE_LIBRARY NAMES  libTraceFormatService.so)
++find_path(SHAPE_INCLUDE_DIR Args.h)
++
++
++message("!!!!SHAPE LIB: ${SHAPE_LIBRARY} - ${SHAPE_INCLUDE_DIR}")
++
++include_directories(${SHAPE_INCLUDE_DIR})
+ 
+ set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
+-set(CMAKE_INSTALL_PREFIX ${shape_DEPLOY})
++#set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
+ 
+ message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+ include(${CMAKE_MODULE_PATH}/ShapeComponentDeclaration.cmake)
+@@ -87,6 +98,8 @@ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS $<$<CONFIG:Debug>:_DEBUG
+ include_directories(${shape_INCLUDE_DIRS})
+ include_directories(${CMAKE_SOURCE_DIR}/include)
+ 
++install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/shapeware FILES_MATCHING PATTERN "*.h")
++
+ add_subdirectory(include)
+ #add_subdirectory(CppRestService)
+ #add_subdirectory(BufferService)
+@@ -111,4 +124,4 @@ if(${BUILD_EXAMPLES})
+   add_subdirectory(examples)
+ endif()
+ 
+-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
++#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
+diff --git a/buildMake.sh b/buildMake.sh
+index 6713d00..5d1d5d9 100755
+--- a/buildMake.sh
++++ b/buildMake.sh
+@@ -3,8 +3,10 @@
+ 
+ project=shapeware
+ 
++rm -rf build
++
+ #expected build dir structure
+-buildexp=build/Unix_Makefiles
++buildexp=build
+ 
+ currentdir=$PWD
+ builddir=./${buildexp}
+@@ -12,17 +14,19 @@ builddir=./${buildexp}
+ mkdir -p ${builddir}
+ 
+ #get path to Shape libs
+-shape=../shape/${buildexp}
+-pushd ${shape}
+-shape=$PWD
+-popd
++#shape=../shape/${buildexp}
++#pushd ${shape}
++#shape=$PWD
++#popd
+ 
+ #launch cmake to generate build environment
+ pushd ${builddir}
+-cmake -G "Unix Makefiles" -DBUILD_ZEROMQ:BOOL=true -DBUILD_TESTING:BOOL=true -DCMAKE_BUILD_TYPE=Debug -DLWS_STATIC_PIC:BOOL=true -DLWS_WITH_SSL:BOOL=false -Dshape_DIR:PATH=${shape} ${currentdir} 
++cmake -DBUILD_ZEROMQ:BOOL=true -DCMAKE_BUILD_TYPE=Debug -DLWS_STATIC_PIC:BOOL=true -DLWS_WITH_SSL:BOOL=false ${currentdir} 
++make -j `nproc`
++sudo make install
+ popd
+ 
+ #build from generated build environment
+-cmake --build ${builddir} --config Debug --target install
++#cmake --build ${builddir} --config Debug --target install
+ 
+ 
+diff --git a/cmake/Component.hxx.in b/cmake/Component.hxx.in
+new file mode 100644
+index 0000000..97ad171
+--- /dev/null
++++ b/cmake/Component.hxx.in
+@@ -0,0 +1,23 @@
++/*!!!!!!!!!!!
++ * This is generated header file according CMakeLists.txt of this project
++ * Don't edit it manually as this file is refreshed after rebuild.
++ * Fix CMakeLists.txt instead and assure required declarations are in place (included) above include of this file
++ *!!!!!!!!!!!
++*/
++#pragma once
++
++#include <ShapeComponent.h>
++
++extern "C" {
++  SHAPE_ABI_EXPORT void* get_component_@NAMESPACE_COMPONENT@(unsigned long* compiler, size_t* typehash)
++  {
++    *compiler = SHAPE_PREDEF_COMPILER;
++    *typehash = std::type_index(typeid(shape::ComponentMeta)).hash_code();
++
++    static shape::ComponentMetaTemplate<@COMPONENT@> component("@COMPONENT@");
++	
++@PROVIDED_INTERFACES@
++@REQUIRED_INTERFACES@
++    return &component;
++  }
++}
+diff --git a/cmake/ShapeComponentDeclaration.cmake b/cmake/ShapeComponentDeclaration.cmake
+new file mode 100644
+index 0000000..202b595
+--- /dev/null
++++ b/cmake/ShapeComponentDeclaration.cmake
+@@ -0,0 +1,168 @@
++function(DeclareShapeComponent componentName)
++	message(STATUS "DeclareShapeComponent(): ${componentName}")
++	string(REPLACE ":" "_" NAMESPACE_COMPONENT ${componentName})
++    set(SHAPE_COMPONENT_${NAMESPACE_COMPONENT} ${componentName} PARENT_SCOPE)
++endfunction()
++
++function(AddShapeProvidedInterface componentName interface)
++	string(REPLACE ":" "_" NAMESPACE_COMPONENT ${componentName})
++	if(${SHAPE_COMPONENT_${NAMESPACE_COMPONENT}} STREQUAL ${componentName})
++		set(IFACE
++			"    component.provideInterface<${interface}>(\"${interface}\");"
++		)
++		set(SHAPE_COMPONENT_PROVIDED_IFACES_${NAMESPACE_COMPONENT} ${SHAPE_COMPONENT_PROVIDED_IFACES_${NAMESPACE_COMPONENT}} "${IFACE}" PARENT_SCOPE)
++	else()
++		message( SEND_ERROR "AddShapeProvidedInterface(): Component ${componentName} must be declared in advance by DeclareShapeComponent()")
++	endif()
++endfunction()
++
++function(AddShapeRequiredInterface componentName interface optionality cardinality)
++	string(REPLACE ":" "_" NAMESPACE_COMPONENT ${componentName})
++	if(${SHAPE_COMPONENT_${NAMESPACE_COMPONENT}} STREQUAL ${componentName})
++		if(NOT ((${optionality} MATCHES MANDATORY) OR (${optionality} MATCHES UNREQUIRED)))
++			message( SEND_ERROR "optionality must be UNREQUIRED|MANDATORY" )
++		endif()
++		if(NOT ((${cardinality} MATCHES SINGLE) OR (${cardinality} MATCHES MULTIPLE)))
++			message( SEND_ERROR "optionality must be UNREQUIRED|MANDATORY" )
++		endif()
++		set(IFACE
++			"    component.requireInterface<${interface}>(\"${interface}\", shape::Optionality::${optionality}, shape::Cardinality::${cardinality});"
++		)
++		set(SHAPE_COMPONENT_REQUIRED_IFACES_${NAMESPACE_COMPONENT} ${SHAPE_COMPONENT_REQUIRED_IFACES_${NAMESPACE_COMPONENT}} "${IFACE}" PARENT_SCOPE)
++	else()
++		message( SEND_ERROR "AddShapeRequiredInterface(): Component ${componentName} must be declared in advance by DeclareShapeComponent()")
++	endif()
++endfunction()
++
++function(ConfigureShapeComponent componentName componentHeader)
++	string(REPLACE ":" "_" NAMESPACE_COMPONENT ${componentName})
++	if(${SHAPE_COMPONENT_${NAMESPACE_COMPONENT}} STREQUAL ${componentName})
++		string(REPLACE ";" ";\n" PROVIDED_INTERFACES "${SHAPE_COMPONENT_PROVIDED_IFACES_${NAMESPACE_COMPONENT}}")
++		string(REPLACE ";" ";\n" REQUIRED_INTERFACES "${SHAPE_COMPONENT_REQUIRED_IFACES_${NAMESPACE_COMPONENT}}")
++		set(TARGET_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NAMESPACE_COMPONENT}.hxx")
++		configure_file(${PROJECT_CMAKE_MODULE_PATH}/Component.hxx.in ${TARGET_FILE} @ONLY)
++		set(${componentHeader} ${TARGET_FILE} PARENT_SCOPE)
++		message(STATUS "Component ${componentName} configured to ${TARGET_FILE}")
++	else()
++		message( SEND_ERROR "ConfigureShapeComponent(): Component ${componentName} must be declared in advance by DeclareShapeComponent()")
++	endif()
++endfunction()
++
++function(DeployShapeComponent componentName)
++	INSTALL(TARGETS ${componentName}
++		RUNTIME DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/bin"
++		LIBRARY DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/lib"
++		ARCHIVE DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/lib"
++	)
++
++	string(REPLACE ":" "_" NAMESPACE_COMPONENT ${componentName})
++	set(schemafile "${CMAKE_CURRENT_SOURCE_DIR}/schema__${NAMESPACE_COMPONENT}.json")
++	if(EXISTS "${schemafile}")
++		install(
++			FILE
++			"${schemafile}"
++			DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/bin"
++		)
++		endif()
++endfunction()
++
++function(DeployShapeConfiguration cfgName)
++	set(cfgPath "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")
++	
++	set(ix 1)
++	while(ix LESS ${ARGC})
++		list(GET ARGV ${ix} src)
++		MATH(EXPR ix "${ix}+1")	
++		if(NOT ix LESS ${ARGC})
++			break()
++		endif()
++
++		list(GET ARGV ${ix} dst)
++		set(dst "${cfgPath}/${dst}")
++		MATH(EXPR ix "${ix}+1")	
++
++		install(
++			DIRECTORY "${src}/"
++			DESTINATION ${dst}
++			USE_SOURCE_PERMISSIONS
++		)
++	endwhile()
++
++endfunction()
++
++function(DeployShapeConfigurationStartUp executable cfgName)
++	set(cfgPath "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")
++	
++	set(_ARGS "./configuration/config.json")
++	if(UNIX)
++	  set(_SUFFIX sh)
++	else()
++	  set(_SUFFIX bat)
++	endif()
++
++	set(_TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/tmp/runcfg/${cfgName}/StartUp)
++	
++	set(_EXE "${shape_DEPLOY}/Debug/${executable}")		
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Debug @ONLY)
++	set(_EXE "${shape_DEPLOY}/Release/${executable}")		
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Release @ONLY)
++
++	install(
++		PROGRAMS "${_TMP_FILE}.Debug"
++		CONFIGURATIONS Debug
++		DESTINATION ${cfgPath}
++		RENAME StartUp.${_SUFFIX}
++	)
++	install(
++		PROGRAMS "${_TMP_FILE}.Release"
++		CONFIGURATIONS Release
++		DESTINATION ${cfgPath}
++		RENAME StartUp.${_SUFFIX}
++	)
++endfunction()
++
++function(DeployShapeConfigurationTest executable cfgName)
++	set(cfgPath ${shape_DEPLOY}/$<CONFIGURATION>/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName})
++	set(_ARGS "./configuration/config.json")
++
++	add_test(
++		NAME ${cfgName}
++		COMMAND ${shape_DEPLOY}/$<CONFIGURATION>/${executable} ${_ARGS}
++		WORKING_DIRECTORY ${cfgPath}
++	)
++endfunction()
++
++# This is temporary. MSVC cmake support shall be used in next MSVC ver.
++# The file <Project>.vcxpro.user is configured only if it doesn't exist - it keeps possible manual changes
++function(ConfigureMsvcProject executable cfgName)
++    if(MSVC)
++		set(_vcxProjUserName "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.vcxproj.user")
++        if (NOT EXISTS ${_vcxProjUserName})
++			if(${MSVC_VERSION} EQUAL 1700)
++				set(VS_VER 11.0)
++			elseif(${MSVC_VERSION} EQUAL 1800)
++				set(VS_VER 12.0)
++			elseif(${MSVC_VERSION} EQUAL 1900)
++				set(VS_VER 14.0)
++			elseif(${MSVC_VERSION} EQUAL 1912)
++				set(VS_VER 15.0)
++			elseif(${MSVC_VERSION} EQUAL 1915)
++				set(VS_VER 15.0)
++			elseif(${MSVC_VERSION} EQUAL 1916)
++				set(VS_VER 15.0)
++			else()
++				message(FATAL_ERROR "Unknown/unsupported VS version: ${MSVC_VERSION}")
++			endif()
++
++			set(DEBUG_EXE "${shape_DEPLOY}/Debug/${executable}")		
++			set(RELEASE_EXE "${shape_DEPLOY}/Release/${executable}")		
++			set(DEBUG_ARGS "./configuration/config.json")		
++			set(RELEASE_ARGS "./configuration/config.json")		
++			set(DEBUG_WD "${shape_DEPLOY}/Debug/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
++			set(RELEASE_WD "${shape_DEPLOY}/Release/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
++
++			configure_file(${PROJECT_CMAKE_MODULE_PATH}/project.vcxproj.user.in ${_vcxProjUserName} @ONLY)
++        endif()
++    endif()
++
++endfunction()
+diff --git a/cmake/StartUp.in b/cmake/StartUp.in
+new file mode 100644
+index 0000000..cc4a0b1
+--- /dev/null
++++ b/cmake/StartUp.in
+@@ -0,0 +1 @@
++@_EXE@ @_ARGS@
+\ No newline at end of file
+diff --git a/include/CMakeLists.txt b/include/CMakeLists.txt
+index ff2818b..e69c7b3 100644
+--- a/include/CMakeLists.txt
++++ b/include/CMakeLists.txt
+@@ -3,3 +3,4 @@ set(incpath ${PROJECT_SOURCE_DIR}/include/)
+ file(GLOB ALL_HEADERS ${incpath}/*.h ${incpath}/*.hpp)
+ 
+ add_custom_target(all_include SOURCES ${ALL_HEADERS})
++
+-- 
+2.7.4
+

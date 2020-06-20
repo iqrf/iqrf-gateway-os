@@ -1,0 +1,39 @@
+From bd60289d2d13d521c90a378da044f26fd683713e Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Tue, 24 Mar 2020 20:18:50 +0100
+Subject: [PATCH] wip
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ CMakeLists.txt | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 22a93d7..a4d000c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -80,18 +80,18 @@ endif()
+ #FIND_PACKAGE(shape REQUIRED)
+ 
+ #find_library(SHAPE_LIBRARY NAMES  libTraceFormatService.so)
+-find_path(SHAPE_INCLUDE_DIR Args.h)
++find_path(SHAPE_INCLUDE_DIR NAMES "Args.h" PATH_SUFFIXES "shape")
+ 
+ 
+ message("!!!!SHAPE LIB: ${SHAPE_LIBRARY} - ${SHAPE_INCLUDE_DIR}")
+ 
+ include_directories(${SHAPE_INCLUDE_DIR})
+ 
+-set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
++#set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
+ #set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR})
+ 
+ message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+-include(${CMAKE_MODULE_PATH}/ShapeComponentDeclaration.cmake)
++include(${PROJECT_CMAKE_MODULE_PATH}/ShapeComponentDeclaration.cmake)
+ 
+ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS $<$<CONFIG:Debug>:_DEBUG>)
+ 
+-- 
+2.7.4
+

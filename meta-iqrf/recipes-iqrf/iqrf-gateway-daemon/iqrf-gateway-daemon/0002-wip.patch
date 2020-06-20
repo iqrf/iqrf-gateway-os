@@ -1,0 +1,94 @@
+From c9ee6f6ed8e9505f1a9e216b8eb5057ee314bd37 Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Tue, 24 Mar 2020 20:28:20 +0100
+Subject: [PATCH] wip
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ CMakeLists.txt                        | 11 +++++------
+ cmake/ShapeComponentDeclaration.cmake |  8 ++++----
+ 2 files changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d4f5f53..e52a511 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.0)
+ project(iqrf-gateway-daemon)
+ 
+ set(PROJECT_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+-set(shape_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH})
++#set(shape_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH})
+ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+ message("PROJECT_CMAKE_MODULE_PATH:${PROJECT_CMAKE_MODULE_PATH}")
+ 
+-include(${CMAKE_MODULE_PATH}/ShapeComponentDeclaration.cmake)
++include(${PROJECT_CMAKE_MODULE_PATH}/ShapeComponentDeclaration.cmake)
+ 
+ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+ 
+@@ -82,7 +82,7 @@ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS $<$<CONFIG:Debug>:_DEBUG
+ 
+ #find_library(SHAPE_LIBRARY NAMES  libTraceFormatService.so
+ #		                             HINTS "/usr/local/Debug/shape/lib")
+-find_path(SHAPE_INCLUDE_DIR Args.h)
++find_path(SHAPE_INCLUDE_DIR NAMES "Args.h" PATH_SUFFIXES "shape")
+ 
+ 
+ message("!!!!SHAPE LIB: ${SHAPE_LIBRARY} - ${SHAPE_INCLUDE_DIR}")
+@@ -91,8 +91,7 @@ include_directories(${SHAPE_INCLUDE_DIR})
+ 
+ #find_library(SHAPEWARE_LIBRARY NAMES libCommandLineService.so
+ #		                             HINTS "/usr/local/Debug/shapeware/lib")
+-find_path(SHAPEWARE_INCLUDE_DIR IBufferService.h
+-        HINTS "/usr/local/include/shapeware" )
++find_path(SHAPEWARE_INCLUDE_DIR NAMES "IBufferService.h" PATH_SUFFIXES "shapeware" )
+ 
+ 
+ message("!!!!SHAPEWARE LIB: ${SHAPEWARE_LIBRARY} - ${SHAPEWARE_INCLUDE_DIR}")
+@@ -101,7 +100,7 @@ include_directories(${SHAPEWARE_INCLUDE_DIR})
+ 
+ message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+ 
+-set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
++#set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
+ 
+ add_definitions(
+   -DRAPIDJSON_HAS_STDSTRING
+diff --git a/cmake/ShapeComponentDeclaration.cmake b/cmake/ShapeComponentDeclaration.cmake
+index fe47549..202b595 100644
+--- a/cmake/ShapeComponentDeclaration.cmake
++++ b/cmake/ShapeComponentDeclaration.cmake
+@@ -40,7 +40,7 @@ function(ConfigureShapeComponent componentName componentHeader)
+ 		string(REPLACE ";" ";\n" PROVIDED_INTERFACES "${SHAPE_COMPONENT_PROVIDED_IFACES_${NAMESPACE_COMPONENT}}")
+ 		string(REPLACE ";" ";\n" REQUIRED_INTERFACES "${SHAPE_COMPONENT_REQUIRED_IFACES_${NAMESPACE_COMPONENT}}")
+ 		set(TARGET_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NAMESPACE_COMPONENT}.hxx")
+-		configure_file(${shape_CMAKE_MODULE_PATH}/Component.hxx.in ${TARGET_FILE} @ONLY)
++		configure_file(${PROJECT_CMAKE_MODULE_PATH}/Component.hxx.in ${TARGET_FILE} @ONLY)
+ 		set(${componentHeader} ${TARGET_FILE} PARENT_SCOPE)
+ 		message(STATUS "Component ${componentName} configured to ${TARGET_FILE}")
+ 	else()
+@@ -103,9 +103,9 @@ function(DeployShapeConfigurationStartUp executable cfgName)
+ 	set(_TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/tmp/runcfg/${cfgName}/StartUp)
+ 	
+ 	set(_EXE "${shape_DEPLOY}/Debug/${executable}")		
+-	configure_file(${shape_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Debug @ONLY)
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Debug @ONLY)
+ 	set(_EXE "${shape_DEPLOY}/Release/${executable}")		
+-	configure_file(${shape_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Release @ONLY)
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Release @ONLY)
+ 
+ 	install(
+ 		PROGRAMS "${_TMP_FILE}.Debug"
+@@ -161,7 +161,7 @@ function(ConfigureMsvcProject executable cfgName)
+ 			set(DEBUG_WD "${shape_DEPLOY}/Debug/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
+ 			set(RELEASE_WD "${shape_DEPLOY}/Release/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
+ 
+-			configure_file(${shape_CMAKE_MODULE_PATH}/project.vcxproj.user.in ${_vcxProjUserName} @ONLY)
++			configure_file(${PROJECT_CMAKE_MODULE_PATH}/project.vcxproj.user.in ${_vcxProjUserName} @ONLY)
+         endif()
+     endif()
+ 
+-- 
+2.7.4
+

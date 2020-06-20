@@ -1,0 +1,114 @@
+From e138c024f657611ae9c02c014d3cea4cb082517f Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Tue, 24 Mar 2020 19:10:47 +0100
+Subject: [PATCH] wip1: stilll working
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ CMakeLists.txt                        | 12 +++++++-----
+ buildMake.sh                          |  4 ++++
+ cmake/ShapeComponentDeclaration.cmake |  8 ++++----
+ 3 files changed, 15 insertions(+), 9 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 88c3178..1ddb39e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,12 +3,13 @@ project (shape)
+ cmake_minimum_required(VERSION 3.0)
+ 
+ set(PROJECT_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+-set(${PROJECT_NAME}_CMAKE_MODULE_PATH ${PROJECT_CMAKE_MODULE_PATH})
+ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+ 
+ enable_language(CXX)
+ enable_language(C)
+ 
++message("C@@@@@@@@@@@@@ ${CMAKE_INSTALL_PREFIX}")
++
+ include(${PROJECT_SOURCE_DIR}/cmake/ShapeComponentDeclaration.cmake)
+ 
+ set_directory_properties(PROPERTIES COMPILE_DEFINITIONS $<$<CONFIG:Debug>:_DEBUG>)
+@@ -107,8 +108,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
+ #apply just configured file
+ #include(${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake)
+ 
+-set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
+-set(CMAKE_INSTALL_PREFIX ${CMAKE_BUILD_DIR})
++#set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
++#set(CMAKE_INSTALL_PREFIX ${CMAKE_BUILD_DIR})
+ 
+ add_definitions(-DRAPIDJSON_HAS_STDSTRING)
+ 
+@@ -120,9 +121,10 @@ add_subdirectory(TraceFormatService)
+ add_subdirectory(TraceFileService)
+ add_subdirectory(ComponentTemplate)
+ 
+-#add_subdirectory(examples/Example1_Thread)
++add_subdirectory(examples/Example1_Thread)
+ 
+-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/shape FILES_MATCHING PATTERN "*.h")
++# install include files
++install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/shape FILES_MATCHING PATTERN "*.h")
+ 
+ if(${BUILD_TESTING})
+ 	#external submodules
+diff --git a/buildMake.sh b/buildMake.sh
+index 6285270..81f655d 100755
+--- a/buildMake.sh
++++ b/buildMake.sh
+@@ -1,6 +1,8 @@
+ #!/bin/bash
+ # Script for building shape on Linux machine
+ 
++rm -rf build
++
+ project=shape
+ 
+ #expected build dir structure
+@@ -21,6 +23,8 @@ popd
+ #launch cmake to generate build environment
+ pushd ${builddir}
+ cmake -DCMAKE_BUILD_TYPE=Debug --trace-source=CMakeLists.txt --trace-expand ${currentdir}
++make -j `nproc`
++sudo make install
+ popd
+ 
+ #build from generated build environment
+diff --git a/cmake/ShapeComponentDeclaration.cmake b/cmake/ShapeComponentDeclaration.cmake
+index fe47549..202b595 100644
+--- a/cmake/ShapeComponentDeclaration.cmake
++++ b/cmake/ShapeComponentDeclaration.cmake
+@@ -40,7 +40,7 @@ function(ConfigureShapeComponent componentName componentHeader)
+ 		string(REPLACE ";" ";\n" PROVIDED_INTERFACES "${SHAPE_COMPONENT_PROVIDED_IFACES_${NAMESPACE_COMPONENT}}")
+ 		string(REPLACE ";" ";\n" REQUIRED_INTERFACES "${SHAPE_COMPONENT_REQUIRED_IFACES_${NAMESPACE_COMPONENT}}")
+ 		set(TARGET_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NAMESPACE_COMPONENT}.hxx")
+-		configure_file(${shape_CMAKE_MODULE_PATH}/Component.hxx.in ${TARGET_FILE} @ONLY)
++		configure_file(${PROJECT_CMAKE_MODULE_PATH}/Component.hxx.in ${TARGET_FILE} @ONLY)
+ 		set(${componentHeader} ${TARGET_FILE} PARENT_SCOPE)
+ 		message(STATUS "Component ${componentName} configured to ${TARGET_FILE}")
+ 	else()
+@@ -103,9 +103,9 @@ function(DeployShapeConfigurationStartUp executable cfgName)
+ 	set(_TMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/tmp/runcfg/${cfgName}/StartUp)
+ 	
+ 	set(_EXE "${shape_DEPLOY}/Debug/${executable}")		
+-	configure_file(${shape_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Debug @ONLY)
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Debug @ONLY)
+ 	set(_EXE "${shape_DEPLOY}/Release/${executable}")		
+-	configure_file(${shape_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Release @ONLY)
++	configure_file(${PROJECT_CMAKE_MODULE_PATH}/StartUp.in ${_TMP_FILE}.Release @ONLY)
+ 
+ 	install(
+ 		PROGRAMS "${_TMP_FILE}.Debug"
+@@ -161,7 +161,7 @@ function(ConfigureMsvcProject executable cfgName)
+ 			set(DEBUG_WD "${shape_DEPLOY}/Debug/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
+ 			set(RELEASE_WD "${shape_DEPLOY}/Release/${PROJECT_INSTALL_PREFIX}/runcfg/${cfgName}")		
+ 
+-			configure_file(${shape_CMAKE_MODULE_PATH}/project.vcxproj.user.in ${_vcxProjUserName} @ONLY)
++			configure_file(${PROJECT_CMAKE_MODULE_PATH}/project.vcxproj.user.in ${_vcxProjUserName} @ONLY)
+         endif()
+     endif()
+ 
+-- 
+2.7.4
+

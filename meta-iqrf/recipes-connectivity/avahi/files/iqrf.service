@@ -1,0 +1,25 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h IQD-GW-01 IQRF</name>
+  <service>
+    <type>_mqtt._tcp</type>
+    <port>1883</port>
+    <txt-record>JSON API for operation</txt-record>
+  </service>
+  <service>
+    <type>_ws._tcp</type>
+    <port>1338 1438</port>
+    <txt-record>JSON API for operation and monitoring</txt-record>
+  </service>
+  <service>
+    <type>_http._tcp</type>
+    <port>80</port>
+    <txt-record>WEB for configuration and service</txt-record>
+  </service>
+  <service>
+    <type>_https._tcp</type>
+    <port>443</port>
+    <txt-record>Secure WEB for configuration and service</txt-record>
+  </service>
+</service-group>

@@ -1,0 +1,28 @@
+stages:
+  - build
+
+cache:
+  paths:
+    - build/downloads
+    - build/sstate-cache
+
+.ssh_template: &ssh_template
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
+build:
+  image: kasproject/kas:latest
+  stage: build
+  script: 
+    - ./build_yocto_server.sh
+  artifacts:
+    paths:
+      - build/tmp/deploy/images/orange-pi-zero/*.mender
+      - build/tmp/deploy/images/orange-pi-zero/*.sdimg
+      - build/tmp/deploy/images/orange-pi-zero/*.sdimg.bmap
+  <<: *ssh_template

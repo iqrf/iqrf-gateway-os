@@ -1,0 +1,99 @@
+From 906ac6e1a1c3594b9715e45a68a7415be2ccc2be Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Sat, 21 Mar 2020 21:50:07 +0100
+Subject: [PATCH] wip: First working version
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ CMakeLists.txt                        | 10 ++++++----
+ buildMake.sh                          |  8 ++++----
+ cmake/ShapeComponentDeclaration.cmake |  2 +-
+ launcher/CMakeLists.txt               |  2 ++
+ 4 files changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0cc105b..88c3178 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -102,13 +102,13 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
+ # This file specifies actions performed and variables exported when using find_package on this project.
+ # The find_package requires properly set ${PROJECT_NAME}_DIR variable to a location where the
+ # configured config file persists. This variable is usually specified from the outside of CMake.
+-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
++#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
+ 
+ #apply just configured file
+-include(${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake)
++#include(${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake)
+ 
+ set(PROJECT_INSTALL_PREFIX ${PROJECT_NAME})
+-set(CMAKE_INSTALL_PREFIX ${shape_DEPLOY})
++set(CMAKE_INSTALL_PREFIX ${CMAKE_BUILD_DIR})
+ 
+ add_definitions(-DRAPIDJSON_HAS_STDSTRING)
+ 
+@@ -120,7 +120,9 @@ add_subdirectory(TraceFormatService)
+ add_subdirectory(TraceFileService)
+ add_subdirectory(ComponentTemplate)
+ 
+-add_subdirectory(examples/Example1_Thread)
++#add_subdirectory(examples/Example1_Thread)
++
++install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/shape FILES_MATCHING PATTERN "*.h")
+ 
+ if(${BUILD_TESTING})
+ 	#external submodules
+diff --git a/buildMake.sh b/buildMake.sh
+index d37f466..6285270 100755
+--- a/buildMake.sh
++++ b/buildMake.sh
+@@ -4,8 +4,8 @@
+ project=shape
+ 
+ #expected build dir structure
+-buildexp=build/Unix_Makefiles
+-deploydir=deploy/Unix_Makefiles
++buildexp=build
++deploydir=test/dep/deploy/
+ 
+ currentdir=$PWD
+ builddir=./${buildexp}
+@@ -20,10 +20,10 @@ popd
+ 
+ #launch cmake to generate build environment
+ pushd ${builddir}
+-cmake -G "Unix Makefiles" -DBUILD_TESTING:BOOL=true -DCMAKE_BUILD_TYPE=Debug -DSHAPE_DEPLOY:PATH=${deploydir} ${currentdir}
++cmake -DCMAKE_BUILD_TYPE=Debug --trace-source=CMakeLists.txt --trace-expand ${currentdir}
+ popd
+ 
+ #build from generated build environment
+-cmake --build ${builddir} --config Debug --target install
++#sudo make --build ${builddir} --config Debug --target install
+ 
+ 
+diff --git a/cmake/ShapeComponentDeclaration.cmake b/cmake/ShapeComponentDeclaration.cmake
+index 848a0c2..fe47549 100644
+--- a/cmake/ShapeComponentDeclaration.cmake
++++ b/cmake/ShapeComponentDeclaration.cmake
+@@ -51,7 +51,7 @@ endfunction()
+ function(DeployShapeComponent componentName)
+ 	INSTALL(TARGETS ${componentName}
+ 		RUNTIME DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/bin"
+-		LIBRARY DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/bin"
++		LIBRARY DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/lib"
+ 		ARCHIVE DESTINATION "\${CMAKE_INSTALL_CONFIG_NAME}/${PROJECT_INSTALL_PREFIX}/lib"
+ 	)
+ 
+diff --git a/launcher/CMakeLists.txt b/launcher/CMakeLists.txt
+index 677fe58..d2979c4 100644
+--- a/launcher/CMakeLists.txt
++++ b/launcher/CMakeLists.txt
+@@ -9,3 +9,5 @@ source_group("Source Files" FILES ${_SRCFILES})
+ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+ 
+ add_library(${PROJECT_NAME} STATIC ${_HDRFILES} ${_SRCFILES})
++
++install(TARGETS launcher DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+-- 
+2.7.4
+

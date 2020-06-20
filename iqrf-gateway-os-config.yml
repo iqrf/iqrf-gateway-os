@@ -1,0 +1,64 @@
+header:
+  version: 8
+machine: raspberrypi3
+distro: poky
+target: iqrf-gatewayos-image
+env:
+  MENDER_ARTIFACT_NAME: 'release5'
+  CI_PIPELINE_ID: 'pipelineID1'
+repos:
+  poky:
+    url: "git://git.yoctoproject.org/poky"
+    refspec: warrior
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+  oe:
+    url: "https://github.com/openembedded/meta-openembedded.git"
+    refspec: warrior
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+      meta-multimedia:
+      meta-webserver:
+  raspberrypi:
+    url: "https://github.com/agherzan/meta-raspberrypi.git"
+    refspec: warrior
+  mender-community:
+    url: "https://github.com/mendersoftware/meta-mender-community.git"
+    refspec: warrior
+    layers:
+      meta-mender-raspberrypi:
+  mender:
+    url: "https://github.com/mendersoftware/meta-mender.git"
+    refspec: warrior
+    layers:
+      meta-mender-core:
+  meta-iqrf:
+      layers:
+        meta-iqrf:      
+local_conf_header:
+  custom: |
+    IMAGE_FEATURES_append = " debug-tweaks"
+  rpi-specific: |
+    ENABLE_SPI = "1"
+    RPI_EXTRA_CONFIG = "dtoverlay=pi3-disable-bt"
+  mender: |
+    IMAGE_INSTALL_append = " kernel-image kernel-devicetree"
+    KERNEL_IMAGETYPE ?= "zImage"
+    IMAGE_BOOT_FILES = "boot.scr"
+    MENDER_IMAGE_BOOTLOADER_BOOTSECTOR_OFFSET="16"
+    MENDER_SERVER_URL = "https://mender.iqrf.org"
+    MENDER_FEATURES_ENABLE_append = " mender-uboot mender-image mender-image-sd mender-install"
+    MENDER_FEATURES_DISABLE_append = " mender-grub mender-image-uefi"
+    IMAGE_ROOTFS_MAXSIZE = "2048000"
+    MENDER_STORAGE_TOTAL_SIZE_MB = "4090"
+  systemd_enable: |
+    DISTRO_FEATURES_append = " systemd"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
+    VIRTUAL-RUNTIME_initscripts = ""
+  distro: |
+    DISTRO_FEATURES_remove = "irda pcmcia usbgadget nfs pci 3g nfc opengl ptest wayland vulkan pulseaudio x11"

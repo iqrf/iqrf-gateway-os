@@ -1,0 +1,26 @@
+From cc8fbe52f00451f6e0876a4d0fda906b4e3479b9 Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@open-nandra.com>
+Date: Mon, 8 Jun 2020 20:22:55 +0200
+Subject: [PATCH] app: config: Disable sudo
+
+Signed-off-by: Marek Belisko <marek.belisko@open-nandra.com>
+---
+ app/config/config.neon | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/app/config/config.neon b/app/config/config.neon
+index 4381d65..f4a6924 100644
+--- a/app/config/config.neon
++++ b/app/config/config.neon
+@@ -1,7 +1,7 @@
+ parameters:
+ 	# init deamon used in out system (e.g. systemd)
+ 	initDaemon: 'systemd'
+-	sudo: true
++	sudo: false
+ 	# Daemon configuration
+ 	daemon:
+ 		# Path to directory with IQRF Gateway Daemon's JSON API schemas
+-- 
+2.7.4
+
