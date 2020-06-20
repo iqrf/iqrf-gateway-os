@@ -20,9 +20,9 @@ IMAGE_INSTALL = "packagegroup-core-boot \
 		networkmanager \
 		modemmanager \
 		usb-modeswitch \
+		coreutils \
 "
 
 IMAGE_LINGUAS = " "
 
 inherit core-image
-

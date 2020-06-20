@@ -15,12 +15,16 @@ PACKAGECONFIG_class-native= "mysql sqlite3 opcache openssl \
 	${@bb.utils.filter('DISTRO_FEATURES', 'ipv6 pam', d)} \
 "
 
-SRC_URI_append = " file://iqrf-gateway-webapp.conf"
+SRC_URI_append = " file://iqrf-gateway-webapp.conf \
+	file://01-run-as-root.patch \
+"
 
 
 do_install_append() {
 	install -d ${D}${sysconfdir}/php-fpm.d/
 	install -m 755 ${WORKDIR}/iqrf-gateway-webapp.conf ${D}${sysconfdir}/php-fpm.d/
+
+	install -d ${D}/run/php
 }
 
-FILES_${PN}-fpm += "${sysconfdir}/php-fpm.d/*"
+FILES_${PN}-fpm += "${sysconfdir}/php-fpm.d/* /run/*"
