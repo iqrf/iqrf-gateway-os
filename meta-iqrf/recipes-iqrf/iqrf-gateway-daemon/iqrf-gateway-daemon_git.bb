@@ -12,11 +12,7 @@ SRCREV = "bab8cf108d7b7edf05d728e11993ee416f8a8f3b"
 SRC_URI = "gitsm://gitlab.iqrf.org/open-source/iqrf-gateway-daemon.git;protocol=https;branch=master \
 	file://0001-First-working-verion.patch \
 	file://0002-wip.patch \
-	file://0003-Change-spi-to-spidev0.0.patch \
 	file://iqrf-gateway-daemon.service \
-	file://iqrf__IdeCounterpart.json \
-	file://iqrf__IqrfSpi.json \
-	file://iqrf.service \
 "
 
 S = "${WORKDIR}/git"
