@@ -26,16 +26,12 @@ repos:
   raspberrypi:
     url: "https://github.com/agherzan/meta-raspberrypi.git"
     refspec: warrior
-  mender-community:
-    url: "https://github.com/mendersoftware/meta-mender-community.git"
-    refspec: warrior
-    layers:
-      meta-mender-raspberrypi:
   mender:
     url: "https://github.com/mendersoftware/meta-mender.git"
     refspec: warrior
     layers:
       meta-mender-core:
+      meta-mender-raspberrypi:
   meta-iqrf:
       layers:
         meta-iqrf:      
