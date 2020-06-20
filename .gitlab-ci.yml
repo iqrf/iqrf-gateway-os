@@ -22,7 +22,7 @@ build:
     - ./build_yocto_server.sh
   artifacts:
     paths:
-      - build/tmp/deploy/images/orange-pi-zero/*.mender
-      - build/tmp/deploy/images/orange-pi-zero/*.sdimg
-      - build/tmp/deploy/images/orange-pi-zero/*.sdimg.bmap
+      - build/tmp/deploy/images/raspberry-pi3/*.mender
+      - build/tmp/deploy/images/raspberry-pi3/*.sdimg
+      - build/tmp/deploy/images/raspberry-pi3/*.sdimg.bmap
   <<: *ssh_template
