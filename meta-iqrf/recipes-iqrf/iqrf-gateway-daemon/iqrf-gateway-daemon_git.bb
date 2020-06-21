@@ -34,16 +34,12 @@ do_install_append() {
 
 # install extra directories
 	install -d ${D}${sysconfdir}
-	install -m 644 ${WORKDIR}/iqrf.service ${D}${sysconfdir}
 	install -d ${D}${sysconfdir}/iqrf-gateway-daemon
 
 	cp -r ${IQRF_BASE_CFG_PATH}/configuration/* ${D}${sysconfdir}/iqrf-gateway-daemon/
 	cp -r ${IQRF_BASE_CFG_PATH}/configuration-LinDeploy/* ${D}${sysconfdir}/iqrf-gateway-daemon
 
 	cp -r ${IQRF_BASE_CFG_PATH}/cfgSchemas ${D}${sysconfdir}/iqrf-gateway-daemon
-
-	install -m 644 ${WORKDIR}/iqrf__IdeCounterpart.json ${D}${sysconfdir}/iqrf-gateway-daemon
-	install -m 644 ${WORKDIR}/iqrf__IqrfSpi.json ${D}${sysconfdir}/iqrf-gateway-daemon
 
 	install -d ${D}${sysconfdir}/iqrf-gateway-daemon/certs
 	install -d ${D}${sysconfdir}/iqrf-gateway-daemon/certs/core
