@@ -21,6 +21,7 @@ IMAGE_INSTALL = "packagegroup-core-boot \
 		modemmanager \
 		usb-modeswitch \
 		coreutils \
+		linux-firmware-rtl8192cu \
 "
 
 IMAGE_LINGUAS = " "
