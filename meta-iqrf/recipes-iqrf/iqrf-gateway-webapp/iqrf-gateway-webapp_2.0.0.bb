@@ -5,12 +5,9 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=e3fc50a88d0a364313df4b21ef20c29e"
 DEPENDS += "composer-native php-native openssl-native"
 RDEPENDS_${PN} += "nginx php php-cgi php-cli php-fpm php-opcache php-pear php-phar"
 
-SRCREV = "7783cdb3a0584509f0e2361dd2d61a29fa04a31d"
-
-SRC_URI = "git://gitlab.iqrf.org/open-source/iqrf-gateway-webapp.git;protocol=https;branch=master \
+SRC_URI = "git://gitlab.iqrf.org/open-source/iqrf-gateway-webapp.git;protocol=https;tag=v${PV} \
 	file://0001-app-config-Disable-sudo.patch \
 	file://0002-Makefile-fixes.patch \
-	file://0003-debian_iqd-gw-01_patches_fix-features.diff \
 "
 
 S = "${WORKDIR}/git"
@@ -33,14 +30,18 @@ do_install() {
 		chmod 600 ${WEBAPP_CERT_DIR}/*.pem
 	fi
 
-	install -d ${D}/var/log/iqrf-gateway-webapp
+	if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+		install -d ${D}${sysconfdir}/tmpfiles.d
+		echo "d ${localstatedir}/log/iqrf-gateway-webapp - - - -" \
+			> ${D}${sysconfdir}/tmpfiles.d/iqrf-gateway-webapp.conf
+	fi
 }
 
-FILES_${PN} += "${sbindir}/*"
+FILES_${PN} += "${sbindir}/* ${sysconfdir}/tmpfiles.d/*"
 
 pkg_postinst_ontarget_${PN} () {
-	iqrf-gateway-webapp-manager database:create
-	iqrf-gateway-webapp-manager migrations:migrate --no-interaction
-	iqrf-gateway-webapp-manager nette:latte:warmup
+	/usr/sbin/iqrf-gateway-webapp-manager database:create
+	/usr/sbin/iqrf-gateway-webapp-manager migrations:migrate --no-interaction
+	/usr/sbin/iqrf-gateway-webapp-manager nette:latte:warmup
 }
 

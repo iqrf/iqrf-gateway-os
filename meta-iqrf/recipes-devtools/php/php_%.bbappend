@@ -23,8 +23,6 @@ SRC_URI_append = " file://iqrf-gateway-webapp.conf \
 do_install_append() {
 	install -d ${D}${sysconfdir}/php-fpm.d/
 	install -m 755 ${WORKDIR}/iqrf-gateway-webapp.conf ${D}${sysconfdir}/php-fpm.d/
-
-	install -d ${D}/run/php
 }
 
-FILES_${PN}-fpm += "${sysconfdir}/php-fpm.d/* /run/*"
+FILES_${PN}-fpm += "${sysconfdir}/php-fpm.d/* ${sysconfdir}/tmpfiles.d/*"
