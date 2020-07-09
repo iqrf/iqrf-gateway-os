@@ -7,8 +7,6 @@ inherit cmake systemd python3native
 DEPENDS = "shape shapeware python3-native python3-requests-native"
 RDEPEND_${PN} += "shape shapeware"
 
-SRCREV = "bab8cf108d7b7edf05d728e11993ee416f8a8f3b"
-
 SRC_URI = "gitsm://gitlab.iqrf.org/open-source/iqrf-gateway-daemon.git;protocol=https;tag=v${PV};branch=release/v2.2 \
 	file://0001-First-working-verion.patch \
 	file://0002-wip.patch \
