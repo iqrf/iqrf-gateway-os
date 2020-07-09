@@ -9,7 +9,7 @@ RDEPEND_${PN} += "shape shapeware"
 
 SRCREV = "bab8cf108d7b7edf05d728e11993ee416f8a8f3b"
 
-SRC_URI = "gitsm://gitlab.iqrf.org/open-source/iqrf-gateway-daemon.git;protocol=https;branch=master \
+SRC_URI = "gitsm://gitlab.iqrf.org/open-source/iqrf-gateway-daemon.git;protocol=https;tag=v${PV};branch=release/v2.2 \
 	file://0001-First-working-verion.patch \
 	file://0002-wip.patch \
 	file://iqrf-gateway-daemon.service \
@@ -23,9 +23,9 @@ INSANE_SKIP_${PN}-dev += "dev-elf"
 
 SYSTEMD_SERVICE_${PN} = "iqrf-gateway-daemon.service"
 
-IQRF_BASE_CFG_PATH = "${S}/src//start-IqrfDaemon/"
+IQRF_BASE_CFG_PATH = "${S}/src/start-IqrfDaemon/"
 
-EXTRA_OECMAKE_append = " -DDAEMON_VERSION=v-master-${SRCREV}-${CI_PIPELINE_ID}"
+EXTRA_OECMAKE_append = " -DDAEMON_VERSION=v${PV}"
 
 do_install_append() {
 # install systemd
